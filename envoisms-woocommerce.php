@@ -3,7 +3,7 @@
  * Plugin Name: EnvoiSMS for WooCommerce
  * Plugin URI: https://envoisms.ma
  * Description: Automated Order SMS / WhatsApp Notifications & OTP Checkout Verification for Morocco via EnvoiSMS.ma API.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: EnvoiSMS.ma
  * Author URI: https://envoisms.ma
  * License: MIT
@@ -47,6 +47,8 @@ class EnvoiSMS_WooCommerce {
     }
 
     public function render_settings_page() {
+        $default_proc = 'Bonjour {first_name}, votre commande #{order_id} d\'un montant de {order_total} MAD est en cours de préparation.';
+        $default_comp = 'Bonjour {first_name}, votre commande #{order_id} est expédiée et en cours de livraison.';
         ?>
         <div class="wrap">
             <h2>EnvoiSMS.ma Configuration</h2>
@@ -61,6 +63,20 @@ class EnvoiSMS_WooCommerce {
                         <th scope="row">Sender ID (Expéditeur)</th>
                         <td><input type="text" name="envoisms_sender_id" value="<?php echo esc_attr(get_option('envoisms_sender_id', 'MonBusiness')); ?>" class="regular-text" /></td>
                     </tr>
+                    <tr>
+                        <th scope="row">Message Commande en cours</th>
+                        <td>
+                            <textarea name="envoisms_msg_processing" rows="3" class="large-text"><?php echo esc_textarea(get_option('envoisms_msg_processing', $default_proc)); ?></textarea>
+                            <p class="description">Variables: <code>{first_name}</code>, <code>{last_name}</code>, <code>{order_id}</code>, <code>{order_total}</code>, <code>{billing_city}</code></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Message Commande expédiée</th>
+                        <td>
+                            <textarea name="envoisms_msg_completed" rows="3" class="large-text"><?php echo esc_textarea(get_option('envoisms_msg_completed', $default_comp)); ?></textarea>
+                            <p class="description">Variables: <code>{first_name}</code>, <code>{last_name}</code>, <code>{order_id}</code>, <code>{order_total}</code></p>
+                        </td>
+                    </tr>
                 </table>
                 <?php submit_button(); ?>
             </form>
@@ -71,19 +87,28 @@ class EnvoiSMS_WooCommerce {
     public function notify_order_processing($order_id) {
         $order = wc_get_order($order_id);
         $phone = $order->get_billing_phone();
-        $name = $order->get_billing_first_name();
-
-        $message = "Bonjour {$name}, votre commande #{$order_id} est en cours de préparation. Merci pour votre confiance !";
+        $template = get_option('envoisms_msg_processing', 'Bonjour {first_name}, votre commande #{order_id} est en préparation.');
+        $message = $this->parse_template($template, $order);
         $this->send_sms($phone, $message);
     }
 
     public function notify_order_completed($order_id) {
         $order = wc_get_order($order_id);
         $phone = $order->get_billing_phone();
-        $name = $order->get_billing_first_name();
-
-        $message = "Bonjour {$name}, votre commande #{$order_id} est expédiée et en cours de livraison.";
+        $template = get_option('envoisms_msg_completed', 'Bonjour {first_name}, votre commande #{order_id} est expédiée.');
+        $message = $this->parse_template($template, $order);
         $this->send_sms($phone, $message);
+    }
+
+    private function parse_template(string $template, $order): string {
+        $replacements = [
+            '{first_name}'   => $order->get_billing_first_name(),
+            '{last_name}'    => $order->get_billing_last_name(),
+            '{order_id}'     => (string) $order->get_id(),
+            '{order_total}'  => (string) $order->get_total(),
+            '{billing_city}' => $order->get_billing_city(),
+        ];
+        return str_replace(array_keys($replacements), array_values($replacements), $template);
     }
 
     private function send_sms($phone, $message) {
