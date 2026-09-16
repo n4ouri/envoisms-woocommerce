@@ -3,7 +3,7 @@
  * Plugin Name: EnvoiSMS for WooCommerce
  * Plugin URI: https://envoisms.ma
  * Description: Automated Order SMS / WhatsApp Notifications & OTP Checkout Verification for Morocco via EnvoiSMS.ma API.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: EnvoiSMS.ma
  * Author URI: https://envoisms.ma
  * License: MIT
