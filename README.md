@@ -10,7 +10,7 @@ For full API documentation, visit the [Passerelle SMS & WhatsApp Business](https
 
 ## Features
 
-- **Multi-Channel Notifications**: Send order updates via standard SMS or WhatsApp Business.
+- **SMS Order Notifications**: Send order updates by SMS through Morocco's operator routes — it reaches every customer, WhatsApp users included, with no extra setup. (WhatsApp Business sends need your own connected number and an approved template; use the [EnvoiSMS.ma dashboard](https://envoisms.ma/fr/whatsapp/) or the API for those.)
 - **Moroccan Carrier Normalisation**: Automatic formatting and validation of Moroccan phone numbers (+212 6 / +212 7).
 - **Branded Sender ID**: Broadcast messages using your official registered business sender name.
 - **Order Lifecycle Events**: Trigger alerts on New Order, Processing, Completed, and Cancelled statuses.
@@ -25,7 +25,7 @@ For full API documentation, visit the [Passerelle SMS & WhatsApp Business](https
 2. In WordPress Admin, navigate to **Plugins** and click **Activate** for **EnvoiSMS.ma – SMS & WhatsApp for WooCommerce**.
 3. Go to **Settings → EnvoiSMS.ma**.
 4. Enter your API Key from your [EnvoiSMS.ma Dashboard](https://envoisms.ma/dashboard).
-5. Configure your preferred sender name, notification channel (SMS or WhatsApp), and custom templates.
+5. Configure your sender name and the message templates for each order status.
 6. Click **Save Changes**.
 
 ---

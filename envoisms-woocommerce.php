@@ -89,7 +89,7 @@ class EnvoiSMS_WooCommerce {
         $phone = $order->get_billing_phone();
         $template = get_option('envoisms_msg_processing', 'Bonjour {first_name}, votre commande #{order_id} est en préparation.');
         $message = $this->parse_template($template, $order);
-        $this->send_sms($phone, $message);
+        $this->send_sms($phone, $message, 'wc-' . $order_id . '-processing');
     }
 
     public function notify_order_completed($order_id) {
@@ -97,7 +97,7 @@ class EnvoiSMS_WooCommerce {
         $phone = $order->get_billing_phone();
         $template = get_option('envoisms_msg_completed', 'Bonjour {first_name}, votre commande #{order_id} est expédiée.');
         $message = $this->parse_template($template, $order);
-        $this->send_sms($phone, $message);
+        $this->send_sms($phone, $message, 'wc-' . $order_id . '-completed');
     }
 
     private function parse_template(string $template, $order): string {
@@ -111,7 +111,11 @@ class EnvoiSMS_WooCommerce {
         return str_replace(array_keys($replacements), array_values($replacements), $template);
     }
 
-    private function send_sms($phone, $message) {
+    // $idempotency_key: one key per (order, status) — WooCommerce can fire a
+    // status hook more than once (plugin conflicts, manual re-saves), and the
+    // API honours the key for 24 h, so the customer gets one SMS and the
+    // store pays for one.
+    private function send_sms($phone, $message, $idempotency_key = '') {
         if (empty($this->api_key) || empty($phone)) {
             return;
         }
@@ -124,10 +128,11 @@ class EnvoiSMS_WooCommerce {
         $formattedPhone = '+' . ltrim($cleanPhone, '+');
 
         wp_remote_post('https://api.envoisms.ma/v1/messages', [
-            'headers' => [
+            'headers' => array_filter([
                 'Authorization' => 'Bearer ' . $this->api_key,
                 'Content-Type' => 'application/json',
-            ],
+                'Idempotency-Key' => $idempotency_key,
+            ]),
             'body' => wp_json_encode([
                 'to' => $formattedPhone,
                 'message' => $message,
